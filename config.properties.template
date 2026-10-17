@@ -1,0 +1,18 @@
+# ================================================================
+# CivicEye — Database Configuration Template
+# ================================================================
+# INSTRUCTIONS:
+#   1. Copy this file to:  CivicEye/config.properties
+#   2. Replace the placeholder values with your actual MySQL details.
+#   3. NEVER commit config.properties to version control.
+#      It is listed in .gitignore for your protection.
+# ================================================================
+
+# Full JDBC URL for your local MySQL 8.x server
+db.url=jdbc:mysql://localhost:3306/civiceye_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+# MySQL username (typically 'root' for local development)
+db.user=root
+
+# MySQL password for the above user
+db.password=YOUR_MYSQL_PASSWORD_HERE

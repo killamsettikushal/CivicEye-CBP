@@ -1,0 +1,22 @@
+# -------------------------------------------------------
+# CivicEye — Git Ignore Rules
+# -------------------------------------------------------
+
+# --- Credentials (NEVER commit these) ---
+config.properties
+
+# --- Compiled output ---
+out/
+*.class
+
+# --- macOS metadata ---
+.DS_Store
+**/.DS_Store
+
+# --- IDE / editor files ---
+.vscode/
+*.iml
+.idea/
+
+# --- Logs ---
+*.log
