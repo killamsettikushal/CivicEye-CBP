@@ -45,6 +45,9 @@ public class IssueDAO {
         "SELECT issue_id, reporter_id, category, location, description, status, created_at " +
         "FROM issues WHERE issue_id = ? LIMIT 1";
 
+    private static final String SQL_DELETE_ISSUE =
+        "DELETE FROM issues WHERE issue_id = ?";
+
     // -----------------------------------------------------------------
     // Public methods
     // -----------------------------------------------------------------
@@ -173,6 +176,32 @@ public class IssueDAO {
                                + ": " + e.getMessage());
         }
         return null;
+    }
+
+    // -----------------------------------------------------------------
+    // Test-support helpers (not used by production code)
+    // -----------------------------------------------------------------
+
+    /**
+     * Hard-deletes a single issue by primary key.
+     *
+     * <p><b>Intended for automated test cleanup only.</b>  Production
+     * workflows should never delete issues; status transitions are the
+     * authorised lifecycle mechanism.
+     *
+     * @param issueId the {@code issue_id} to delete
+     * @return {@code true} if exactly one row was removed
+     */
+    public boolean deleteIssue(int issueId) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_DELETE_ISSUE)) {
+            ps.setInt(1, issueId);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            System.err.println("[IssueDAO] deleteIssue failed for issueId=" + issueId
+                               + ": " + e.getMessage());
+        }
+        return false;
     }
 
     // -----------------------------------------------------------------

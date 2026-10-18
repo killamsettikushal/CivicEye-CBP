@@ -169,4 +169,31 @@ public class UserDAO {
         }
         return false;
     }
+    /**
+     * Applies a signed delta to the citizen's reward-points balance.
+     *
+     * <p>Unlike {@link #updateRewardPoints}, this method accepts negative values,
+     * making it suitable for test-cleanup rollbacks.
+     * <b>Do not call from production code.</b>
+     *
+     * @param userId the citizen's {@code user_id}
+     * @param delta  signed integer (positive = add, negative = subtract)
+     * @return {@code true} if the row was updated; {@code false} otherwise
+     */
+    public boolean adjustRewardPoints(int userId, int delta) {
+        if (delta == 0) return true;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE_POINTS)) {
+
+            ps.setInt(1, delta);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() == 1;
+
+        } catch (SQLException e) {
+            System.err.println("[UserDAO] adjustRewardPoints failed for userId=" + userId
+                               + ": " + e.getMessage());
+        }
+        return false;
+    }
 }
