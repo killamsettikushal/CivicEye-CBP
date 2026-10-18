@@ -77,13 +77,6 @@ public final class AppConstants {
     };
 
     // -----------------------------------------------------------------
-    // Reward points
-    // -----------------------------------------------------------------
-
-    /** Points awarded to a citizen for each successfully submitted issue. */
-    public static final int REWARD_POINTS_PER_ISSUE = 5;
-
-    // -----------------------------------------------------------------
     // Validation limits
     // -----------------------------------------------------------------
 

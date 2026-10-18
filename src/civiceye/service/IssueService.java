@@ -2,7 +2,6 @@
 package civiceye.service;
 
 import civiceye.dao.IssueDAO;
-import civiceye.dao.UserDAO;
 import civiceye.model.Admin;
 import civiceye.model.Issue;
 import civiceye.model.User;
@@ -18,8 +17,7 @@ import java.util.List;
  * <ul>
  *   <li>Validate issue-form input before touching the database.</li>
  *   <li>Enforce the rule that only {@link Admin} users may update issue status.</li>
- *   <li>Award reward points to a citizen after successful issue submission.</li>
- *   <li>Delegate all persistence to {@link IssueDAO} and {@link UserDAO}.</li>
+ *   <li>Delegate all persistence to {@link IssueDAO}.</li>
  * </ul>
  *
  * <p>No SQL is executed in this class.
@@ -27,13 +25,11 @@ import java.util.List;
 public class IssueService {
 
     private final IssueDAO         issueDAO;
-    private final UserDAO          userDAO;
     private final ValidationService validation;
 
     /** Creates an IssueService with default collaborators. */
     public IssueService() {
         this.issueDAO   = new IssueDAO();
-        this.userDAO    = new UserDAO();
         this.validation = new ValidationService();
     }
 
@@ -43,9 +39,6 @@ public class IssueService {
 
     /**
      * Validates and persists a new civic issue submitted by a citizen.
-     *
-     * <p>On success the citizen is awarded {@link AppConstants#REWARD_POINTS_PER_ISSUE}
-     * reward points via an atomic database UPDATE.
      *
      * @param reporterId  the {@code user_id} of the submitting citizen
      * @param category    selected category (must be in {@link AppConstants#ISSUE_CATEGORIES})
@@ -83,14 +76,6 @@ public class IssueService {
         if (!saved) {
             System.err.println("[IssueService] DB insert failed for reporterId=" + reporterId);
             return null;
-        }
-
-        // 4. Award reward points (best-effort — failure does NOT roll back the issue)
-        boolean pointsUpdated = userDAO.updateRewardPoints(
-                reporterId, AppConstants.REWARD_POINTS_PER_ISSUE);
-        if (!pointsUpdated) {
-            System.err.println("[IssueService] Warning: reward points update failed for userId="
-                               + reporterId + " — issue was still saved.");
         }
 
         return issue; // issueId is now populated from DB

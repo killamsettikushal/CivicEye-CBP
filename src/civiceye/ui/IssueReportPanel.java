@@ -19,8 +19,7 @@ import java.util.function.Consumer;
  *
  * <p>Validates inputs using {@link civiceye.service.ValidationService} (via
  * {@link IssueService}), submits through the service layer, then invokes
- * {@code onSuccess} so the parent dashboard can refresh the table and update
- * the reward-points badge.
+ * {@code onSuccess} so the parent dashboard can refresh the table.
  *
  * <p>The DB call runs inside a {@link SwingWorker} to keep the UI responsive.
  */

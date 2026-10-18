@@ -142,7 +142,7 @@ public class AuthService {
             return new Admin(record.userId, record.name, record.email);
         } else {
             // Default to Citizen for any unrecognised role as a safe fallback
-            return new Citizen(record.userId, record.name, record.email, record.rewardPoints);
+            return new Citizen(record.userId, record.name, record.email);
         }
     }
 }

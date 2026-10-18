@@ -2,7 +2,6 @@
 package civiceye.test;
 
 import civiceye.dao.IssueDAO;
-import civiceye.dao.UserDAO;
 import civiceye.database.DBConnection;
 import civiceye.model.Admin;
 import civiceye.model.Citizen;
@@ -21,12 +20,11 @@ import java.util.List;
  * <ol>
  *   <li>Citizen and admin login</li>
  *   <li>Citizen submits a new issue</li>
- *   <li>Reward points verified in the database</li>
  *   <li>Issue visibility — citizen's own list + admin all-issues view</li>
  *   <li>Status-update workflow with all authorisation and transition rules</li>
  *   <li>Persistence — re-query confirms each state change was written to MySQL</li>
  *   <li>Citizen re-queries and sees the admin-updated status</li>
- *   <li>Cleanup — test issue and temporary points increment removed from DB</li>
+ *   <li>Cleanup — test issue removed from DB</li>
  * </ol>
  *
  * <p>Run command:
@@ -66,7 +64,6 @@ public class EndToEndTest {
         AuthService  authService  = new AuthService();
         IssueService issueService = new IssueService();
         IssueDAO     issueDAO     = new IssueDAO();
-        UserDAO      userDAO      = new UserDAO();
 
         // ─────────────────────────────────────────────────────────────
         section("STEP 1: Authentication");
@@ -93,9 +90,8 @@ public class EndToEndTest {
 
         Citizen citizen = (Citizen) citizenUser;
         Admin   admin   = (Admin)   adminUser;
-        int     pointsBefore = citizen.getRewardPoints();
-        System.out.printf("         Citizen '%s' (id=%d)  |  points before test: %d%n",
-                citizen.getName(), citizen.getUserId(), pointsBefore);
+        System.out.printf("         Citizen '%s' (id=%d)%n",
+                citizen.getName(), citizen.getUserId());
 
         // ─────────────────────────────────────────────────────────────
         section("STEP 2: Issue Submission");
@@ -132,24 +128,7 @@ public class EndToEndTest {
         assertFalse("submitIssue rejects blank category",        badSubmit != null);
 
         // ─────────────────────────────────────────────────────────────
-        section("STEP 3: Reward Points Updated in DB");
-        // ─────────────────────────────────────────────────────────────
-
-        // Re-authenticate to read fresh points from the database
-        User freshCitizen = authService.login("citizen@civiceye.com", "Citizen@123");
-        assertTrue("Re-login after submission succeeds",         freshCitizen instanceof Citizen);
-        if (freshCitizen instanceof Citizen fc) {
-            int pointsAfter = fc.getRewardPoints();
-            int diff        = pointsAfter - pointsBefore;
-            System.out.printf("         Points before: %d  |  After: %d  |  Diff: %d%n",
-                    pointsBefore, pointsAfter, diff);
-            assertTrue("Reward points increased by " + AppConstants.REWARD_POINTS_PER_ISSUE
-                       + " (got +" + diff + ")",
-                    diff == AppConstants.REWARD_POINTS_PER_ISSUE);
-        }
-
-        // ─────────────────────────────────────────────────────────────
-        section("STEP 4: Issue Visibility");
+        section("STEP 3: Issue Visibility");
         // ─────────────────────────────────────────────────────────────
 
         // Citizen sees their own issue
@@ -170,7 +149,7 @@ public class EndToEndTest {
                 citizenList.size(), allIssues.size());
 
         // ─────────────────────────────────────────────────────────────
-        section("STEP 5: Status-Update Workflow (Authorisation + Transitions)");
+        section("STEP 4: Status-Update Workflow (Authorisation + Transitions)");
         // ─────────────────────────────────────────────────────────────
 
         if (testIssueId < 1) {
@@ -222,7 +201,7 @@ public class EndToEndTest {
         }
 
         // ─────────────────────────────────────────────────────────────
-        section("STEP 6: Citizen Re-Queries and Sees Updated Status");
+        section("STEP 5: Citizen Re-Queries and Sees Updated Status");
         // ─────────────────────────────────────────────────────────────
 
         if (testIssueId > 0) {
@@ -237,7 +216,7 @@ public class EndToEndTest {
         }
 
         // ─────────────────────────────────────────────────────────────
-        section("STEP 7: Cleanup (DB left unchanged by test)");
+        section("STEP 6: Cleanup (DB left unchanged by test)");
         // ─────────────────────────────────────────────────────────────
 
         if (testIssueId > 0) {
@@ -248,22 +227,6 @@ public class EndToEndTest {
             // Verify the delete
             Issue shouldBeNull = issueDAO.getIssueById(testIssueId);
             assertFalse("getIssueById returns null after delete",  shouldBeNull != null);
-        }
-
-        // Roll back the reward points earned during this test run
-        boolean pointsRolledBack = userDAO.adjustRewardPoints(
-                citizen.getUserId(), -AppConstants.REWARD_POINTS_PER_ISSUE);
-        assertTrue("Citizen reward points rolled back by -"
-                   + AppConstants.REWARD_POINTS_PER_ISSUE + " pts", pointsRolledBack);
-
-        // Final check: citizen's points are back to what they were before the test
-        User finalCitizen = authService.login("citizen@civiceye.com", "Citizen@123");
-        if (finalCitizen instanceof Citizen fc) {
-            assertTrue("Citizen points restored to pre-test value ("
-                       + pointsBefore + ")",
-                    fc.getRewardPoints() == pointsBefore);
-            System.out.printf("         Points restored: %d (was %d before test)%n",
-                    fc.getRewardPoints(), pointsBefore);
         }
 
         // ─────────────────────────────────────────────────────────────

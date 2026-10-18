@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutionException;
  * </pre>
  *
  * <p>F5 / Refresh button reloads the issue list from the database.
- * Points badge updates in-memory after each successful submission.
  */
 public class CitizenDashboard extends JFrame {
 
@@ -53,9 +52,8 @@ public class CitizenDashboard extends JFrame {
     private final Citizen      citizen;
     private final IssueService issueService = new IssueService();
 
-    // ── Widget refs (need updating after submit) ───────────────────────
-    private JLabel         pointsLabel;
-    private JLabel         statusBarLabel;
+    // ── Widget refs ────────────────────────────────────────────────────
+    private JLabel          statusBarLabel;
     private IssueTablePanel tablePanel;
 
     private static final DateTimeFormatter TIME_FMT =
@@ -126,11 +124,10 @@ public class CitizenDashboard extends JFrame {
         left.add(sep1);
         left.add(welcome);
 
-        // ── Right: points badge + refresh + logout ─────────────────
+        // ── Right: refresh + logout ───────────────────────────────
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
 
-        pointsLabel = buildPointsBadge();
         JButton refreshBtn = buildIconButton("\u21BA  Refresh", new Color(40, 60, 120),
                                              new Color(60, 90, 170));
         refreshBtn.addActionListener(e -> refreshTable());
@@ -139,38 +136,12 @@ public class CitizenDashboard extends JFrame {
                                             new Color(200, 70, 70));
         logoutBtn.addActionListener(e -> logout());
 
-        right.add(pointsLabel);
-        right.add(Box.createHorizontalStrut(4));
         right.add(refreshBtn);
         right.add(logoutBtn);
 
         header.add(left,  BorderLayout.WEST);
         header.add(right, BorderLayout.EAST);
         return header;
-    }
-
-    private JLabel buildPointsBadge() {
-        JLabel badge = new JLabel("\u2B50 " + citizen.getRewardPoints() + " pts",
-                                  SwingConstants.CENTER) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                    RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(30, 50, 100));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
-                g2.setColor(new Color(55, 80, 150));
-                g2.setStroke(new BasicStroke(1f));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
-                super.paintComponent(g);
-            }
-        };
-        badge.setFont(new Font("SansSerif", Font.BOLD, 12));
-        badge.setForeground(SUCCESS);
-        badge.setOpaque(false);
-        badge.setBorder(new EmptyBorder(5, 14, 5, 14));
-        badge.setPreferredSize(new Dimension(110, 32));
-        return badge;
     }
 
     private JButton buildIconButton(String label, Color base, Color hover) {
@@ -212,15 +183,7 @@ public class CitizenDashboard extends JFrame {
         IssueReportPanel reportPanel = new IssueReportPanel(
             citizen,
             issueService,
-            submittedIssue -> {
-                // 1. Update in-memory points
-                citizen.addRewardPoints(AppConstants.REWARD_POINTS_PER_ISSUE);
-                // 2. Refresh the badge label
-                pointsLabel.setText("\u2B50 " + citizen.getRewardPoints() + " pts");
-                pointsLabel.repaint();
-                // 3. Reload issue list
-                refreshTable();
-            }
+            submittedIssue -> refreshTable()
         );
         reportPanel.setPreferredSize(new Dimension(360, 0));
         reportPanel.setMinimumSize(new Dimension(300, 0));

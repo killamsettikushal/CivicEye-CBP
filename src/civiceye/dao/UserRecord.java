@@ -39,21 +39,17 @@ public final class UserRecord {
     /** Role string: {@code "Citizen"} or {@code "Admin"}. */
     public final String role;
 
-    /** Reward points balance from {@code users.reward_points}. */
-    public final int    rewardPoints;
-
     /**
      * Package-private constructor — only {@link UserDAO} should create instances.
      */
     UserRecord(int userId, String name, String email,
                String passwordHash, String salt,
-               String role, int rewardPoints) {
+               String role) {
         this.userId       = userId;
         this.name         = name;
         this.email        = email;
         this.passwordHash = passwordHash;
         this.salt         = salt;
         this.role         = role;
-        this.rewardPoints = rewardPoints;
     }
 }

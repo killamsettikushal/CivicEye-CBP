@@ -23,7 +23,7 @@ USE civiceye_db;
 -- Demo users  (INSERT IGNORE to stay idempotent)
 -- ----------------------------------------------------------
 INSERT IGNORE INTO users
-    (name, email, password_hash, salt, role, reward_points)
+    (name, email, password_hash, salt, role)
 VALUES
     -- Admin@123  +  salt a1b2c3d4e5f60001
     (
@@ -31,8 +31,7 @@ VALUES
         'admin@civiceye.com',
         '01b79d242da80052277081ae43731cb97c916a0c1c68120358279dc98a278864',
         'a1b2c3d4e5f60001',
-        'Admin',
-        0
+        'Admin'
     ),
     -- Citizen@123  +  salt f0e1d2c3b4a50002
     (
@@ -40,8 +39,7 @@ VALUES
         'citizen@civiceye.com',
         '1960dc3f041e1f50112ae112ace5bca50e628784061c74cc41b91eb053af057c',
         'f0e1d2c3b4a50002',
-        'Citizen',
-        15
+        'Citizen'
     );
 
 -- ----------------------------------------------------------

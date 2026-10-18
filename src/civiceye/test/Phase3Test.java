@@ -162,8 +162,7 @@ public class Phase3Test {
                     AppConstants.ROLE_CITIZEN.equals(citizenUser.getRole()));
             assertThat("logged-in user is Citizen instance",
                     citizenUser instanceof Citizen);
-            assertThat("citizen reward points ≥ 0",
-                    ((Citizen) citizenUser).getRewardPoints() >= 0);
+
         }
 
         // Wrong password

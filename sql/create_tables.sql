@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(64)     NOT NULL,   -- SHA-256 hex (64 chars)
     salt          VARCHAR(32)     NOT NULL,   -- random hex salt (16 bytes = 32 hex chars)
     role          ENUM('Citizen', 'Admin') NOT NULL DEFAULT 'Citizen',
-    reward_points INT             NOT NULL DEFAULT 0,
     created_at    TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (user_id),
