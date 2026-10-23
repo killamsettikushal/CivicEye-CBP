@@ -1,0 +1,67 @@
+%% ==========================================================================
+%% CivicEye - UML Component Diagram
+%% Components are the Java types of src/civiceye/**
+%% Edges are labelled with the exposed operation (port).
+%% ==========================================================================
+flowchart TB
+    subgraph PRES["«component» Presentation Layer - package civiceye.ui"]
+        C_MAIN["«component» Main<br/>main(String[])"]
+        C_LOGIN["«component» LoginFrame<br/>attemptLogin / openDashboard"]
+        C_REG["«component» RegistrationDialog<br/>attemptRegister"]
+        C_CDASH["«component» CitizenDashboard<br/>refreshTable / logout"]
+        C_ADASH["«component» AdminDashboard<br/>refreshTable / onRowSelected / attemptStatusUpdate"]
+        C_FORM["«component» IssueReportPanel<br/>attemptSubmit / clearForm"]
+        C_TABLE["«component» IssueTablePanel<br/>loadIssues / getSelectedIssue"]
+    end
+
+    subgraph APP["«component» Application Layer - package civiceye.service"]
+        C_AUTH["«component» AuthService<br/>login / registerCitizen"]
+        C_ISS["«component» IssueService<br/>submitIssue / getAllIssues / updateStatus"]
+        C_VAL["«component» ValidationService<br/>validateIssueForm / validateStatusTransition"]
+    end
+
+    subgraph DATA["«component» Data Access Layer - package civiceye.dao"]
+        C_UDAO["«component» UserDAO<br/>findByEmail / createUser / emailExists"]
+        C_IDAO["«component» IssueDAO<br/>createIssue / getAllIssues / updateIssueStatus"]
+    end
+
+    subgraph SUP["«component» Support Layer - package civiceye.util and civiceye.database"]
+        C_CONN["«component» DBConnection<br/>getConnection"]
+        C_PWD["«component» PasswordUtils<br/>generateSalt / hashPassword / verifyPassword"]
+        C_CONST["«component» AppConstants<br/>roles / statuses / categories"]
+    end
+
+    subgraph EXT["«external» CivicEye - civiceye_db (users, issues)"]
+        C_DB[("«database»<br/>users, issues")]
+    end
+
+    C_MAIN -->|"starts"| C_LOGIN
+    C_LOGIN -->|"login(email, password)"| C_AUTH
+    C_LOGIN -->|"opens modal"| C_REG
+    C_REG -->|"registerCitizen(...)"| C_AUTH
+    C_LOGIN -->|"role = Citizen"| C_CDASH
+    C_LOGIN -->|"role = Admin"| C_ADASH
+    C_CDASH -->|"getIssuesByReporter(id)"| C_ISS
+    C_CDASH -->|"contains"| C_FORM
+    C_CDASH -->|"contains"| C_TABLE
+    C_ADASH -->|"getAllIssues()"| C_ISS
+    C_ADASH -->|"contains"| C_TABLE
+    C_FORM -->|"submitIssue(...)"| C_ISS
+    C_FORM -->|"onSuccess(issue)"| C_CDASH
+    C_ISS -->|"delegates to"| C_IDAO
+    C_ISS -->|"validates with"| C_VAL
+    C_AUTH -->|"delegates to"| C_UDAO
+    C_AUTH -->|"validates with"| C_VAL
+    C_AUTH -->|"hashes with"| C_PWD
+    C_ISS -->|"reads constants"| C_CONST
+    C_AUTH -->|"reads constants"| C_CONST
+    C_UDAO -->|"getConnection()"| C_CONN
+    C_IDAO -->|"getConnection()"| C_CONN
+    C_CONN -->|"JDBC connection"| C_DB
+    C_UDAO -->|"SELECT / INSERT"| C_DB
+    C_IDAO -->|"SELECT / INSERT / UPDATE"| C_DB
+
+    classDef comp fill:#101c3d,stroke:#2f4a8f,color:#dce4ff
+    classDef ext fill:#2a2140,stroke:#a06bff,color:#e8dcff
+    class C_MAIN,C_LOGIN,C_REG,C_CDASH,C_ADASH,C_FORM,C_TABLE,C_AUTH,C_ISS,C_VAL,C_UDAO,C_IDAO,C_CONN,C_PWD,C_CONST comp
+    class C_DB ext

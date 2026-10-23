@@ -1,0 +1,41 @@
+%% ==========================================================================
+%% CivicEye - UML Statechart (issue lifecycle)
+%% Source: ValidationService.validateStatusTransition / AppConstants
+%% Allowed: Pending -> In Progress, Pending -> Resolved, In Progress -> Resolved
+%% Resolved is terminal; backwards moves are rejected.
+%% ==========================================================================
+stateDiagram-v2
+    direction TB
+
+    [*] --> Draft : Citizen opens 'Report a New Issue'
+
+    Draft --> Draft : Edit form fields
+    Draft --> Pending : Submit Issue and form is valid
+
+    Pending --> Pending : Invalid transition rejected
+    Pending --> InProgress : Admin selects 'In Progress'
+    Pending --> Resolved : Admin selects 'Resolved'
+
+    InProgress --> InProgress : Invalid transition rejected
+    InProgress --> Resolved : Admin selects 'Resolved'
+
+    Resolved --> Resolved : Terminal state, no further change
+    Resolved --> [*] : Issue closed
+
+    note right of Pending
+        Status is set to Pending by
+        IssueService.submitIssue.
+        Only an Admin may move an
+        issue out of this state.
+    end note
+
+    note right of InProgress
+        An Admin may not move the
+        issue back to Pending.
+    end note
+
+    note right of Resolved
+        Resolved is a terminal state:
+        every further transition
+        is refused by the service.
+    end note

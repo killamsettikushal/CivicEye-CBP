@@ -1,0 +1,59 @@
+%% ==========================================================================
+%% CivicEye - UML Use Case Diagram
+%% Actors: Citizen, Admin.  Boundary: CivicEye Swing application.
+%% Source: src/civiceye/ui/*, src/civiceye/service/*
+%% ==========================================================================
+flowchart LR
+    CIT(("Citizen"))
+    ADM(("Admin"))
+
+    subgraph SYS["«system boundary» CivicEye - Civic Issue Reporting System"]
+        UC_LOGIN(["Login"])
+        UC_REG(["Register Account"])
+        UC_AUTH(["Authenticate Credentials"])
+        UC_SUBMIT(["Submit Civic Issue"])
+        UC_VALFORM(["Validate Issue Form"])
+        UC_STORE(["Store Issue as Pending"])
+        UC_MINE(["View My Reported Issues"])
+        UC_LOADMINE(["Load Issues of Citizen"])
+        UC_REFRESH(["Refresh Issue List"])
+        UC_ALL(["View All Civic Issues"])
+        UC_LOADALL(["Load All Issues"])
+        UC_SELECT(["Select Issue for Update"])
+        UC_UPD(["Update Issue Status"])
+        UC_VALTRANS(["Validate Status Transition"])
+        UC_SAVE(["Save New Status"])
+        UC_FILTER(["Filter Issues by Status"])
+        UC_LOGOUT(["Logout"])
+    end
+
+    CIT --> UC_LOGIN
+    CIT --> UC_REG
+    CIT --> UC_SUBMIT
+    CIT --> UC_MINE
+    CIT --> UC_REFRESH
+    CIT --> UC_LOGOUT
+
+    ADM --> UC_LOGIN
+    ADM --> UC_ALL
+    ADM --> UC_SELECT
+    ADM --> UC_UPD
+    ADM --> UC_FILTER
+    ADM --> UC_REFRESH
+    ADM --> UC_LOGOUT
+
+    UC_LOGIN -.->|"«include»"| UC_AUTH
+    UC_SUBMIT -.->|"«include»"| UC_VALFORM
+    UC_SUBMIT -.->|"«include»"| UC_STORE
+    UC_MINE -.->|"«include»"| UC_LOADMINE
+    UC_REFRESH -.->|"«extend»"| UC_MINE
+    UC_ALL -.->|"«include»"| UC_LOADALL
+    UC_ALL -.->|"«extend»"| UC_FILTER
+    UC_SELECT -.->|"«extend»"| UC_UPD
+    UC_UPD -.->|"«include»"| UC_VALTRANS
+    UC_UPD -.->|"«include»"| UC_SAVE
+
+    classDef actor fill:#1b2a52,stroke:#5a8bff,stroke-width:2px,color:#dce4ff
+    classDef uc fill:#101c3d,stroke:#2f4a8f,stroke-width:1px,color:#dce4ff
+    class CIT,ADM actor
+    class UC_LOGIN,UC_REG,UC_AUTH,UC_SUBMIT,UC_VALFORM,UC_STORE,UC_MINE,UC_LOADMINE,UC_REFRESH,UC_ALL,UC_LOADALL,UC_SELECT,UC_UPD,UC_VALTRANS,UC_SAVE,UC_FILTER,UC_LOGOUT uc

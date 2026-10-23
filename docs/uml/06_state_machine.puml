@@ -1,0 +1,95 @@
+@startuml civiceye_state
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 6 of 9 : STATE MACHINE DIAGRAM
+'  Notation: StarUML 5 — rounded state boxes, filled initial pseudo
+'  state, bull's-eye final state, black transitions.
+' ===================================================================
+title CivicEye — State Machine Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 11
+  FontStyle bold
+  AttributeFontColor #000000
+  AttributeFontSize 10
+  AttributeFontStyle normal
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  NoteFontColor #000000
+  NoteFontSize 10
+}
+
+' ===================================================================
+'  MACHINE 1 : lifecycle of a civic issue
+' ===================================================================
+state "Issue" as IssueMachine {
+
+  state "Pending" as Pending {
+    Pending : status = "Pending"
+    Pending : createdAt is set
+  }
+
+  state "In Progress" as InProgress {
+    InProgress : status = "In Progress"
+    InProgress : administrator started the work
+  }
+
+  state "Resolved" as Resolved {
+    Resolved : status = "Resolved"
+    Resolved : terminal state
+  }
+
+  [*] --> Pending : submitIssue()
+  Pending    --> InProgress : Administrator sets\n"In Progress"   [transition allowed]
+  Pending    --> Resolved   : Administrator resolves directly   [transition allowed]
+  InProgress --> Resolved   : Administrator marks "Resolved"     [transition allowed]
+  Resolved   --> [*]        : issue closed
+}
+
+' ===================================================================
+'  MACHINE 2 : lifecycle of a citizen session
+' ===================================================================
+state "Citizen Session" as Session {
+
+  state "Anonymous" as Anonymous
+  state "Authenticating" as Authenticating
+  state "Authenticated" as Authenticated
+
+  [*] --> Anonymous
+  Anonymous       --> Authenticating : login(email, password)
+  Authenticating  --> Anonymous      : invalid credentials
+  Authenticating  --> Authenticated  : credentials valid
+  Authenticated   --> Anonymous      : logout()
+}
+
+note right of Pending
+  A new issue is always created
+  in Pending. The two remaining
+  transitions are executed only by
+  an Administrator and are checked
+  by validateStatusTransition().
+end note
+
+note top of Authenticating
+  The password is compared as
+  SHA-256(password + salt) with
+  users.password_hash.
+end note
+
+@enduml

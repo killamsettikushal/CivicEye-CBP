@@ -1,0 +1,60 @@
+%% ==========================================================================
+%% CivicEye - UML Sequence Diagram
+%% Scenario: login with e-mail + password, role-based dashboard dispatch.
+%% Source: LoginFrame.attemptLogin / AuthService.login
+%% ==========================================================================
+sequenceDiagram
+    autonumber
+    actor U as Citizen
+    participant LF as LoginFrame
+    participant SW as SwingWorker (EDT worker thread)
+    participant AS as AuthService
+    participant VS as ValidationService
+    participant UD as UserDAO
+    participant PU as PasswordUtils
+    participant DB as DBConnection
+    participant DS as civiceye_db
+    participant CD as CitizenDashboard
+    participant AD as AdminDashboard
+
+    U->>LF: click "Login" (or press Enter in password field)
+    LF->>LF: read emailField / passwordField
+    LF->>LF: disable button, show "Logging in..."
+    LF->>SW: execute()
+    SW->>AS: login(email, password)
+    AS->>VS: validateLoginForm(email, password)
+    VS-->>AS: null (valid) or error message
+    alt form invalid
+        AS-->>SW: null
+        SW-->>LF: done() -> null
+        LF-->>U: "Invalid email or password. Please try again."
+    else form valid
+        AS->>UD: findByEmail(email)
+        UD->>DB: getConnection()
+        DB-->>UD: Connection
+        UD->>DS: SELECT user_id, name, email, password_hash, salt, role
+        DS-->>UD: row (or no row)
+        UD-->>AS: UserRecord
+        alt no matching record
+            AS-->>SW: null
+            SW-->>LF: done() -> null
+            LF-->>U: "Invalid email or password. Please try again."
+        else record found
+            AS->>PU: verifyPassword(plaintext, record.passwordHash, record.salt)
+            PU->>PU: SHA-256(password + salt) -> hex
+            PU-->>AS: true / false
+            alt password mismatch
+                AS-->>SW: null
+                SW-->>LF: done() -> null
+                LF-->>U: "Invalid email or password. Please try again."
+            else password verified
+                AS->>AS: buildUser(record) -> Citizen or Admin
+                AS-->>SW: User
+                SW-->>LF: done() -> User
+                LF-->>U: "Welcome, <name>!"
+                LF->>LF: dispose() and start 600 ms Timer
+                LF->>CD: new CitizenDashboard(citizen).setVisible(true)
+                LF->>AD: (only when role is Admin) new AdminDashboard(admin)
+            end
+        end
+    end

@@ -1,0 +1,80 @@
+@startuml civiceye_collaboration
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 5 of 9 : COLLABORATION (COMMUNICATION) DIAGRAM
+'  Notation: StarUML 5 — underlined object rectangles joined by links;
+'  the order of the interaction is given by the message numbers.
+'  Each link carries the call and the return value.
+' ===================================================================
+title CivicEye — Collaboration Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 9
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+skinparam classAttributeIconSize 0
+skinparam nodesep 30
+skinparam ranksep 45
+
+skinparam object {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 11
+}
+
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  NoteFontColor #000000
+  NoteFontSize 9
+}
+
+object "<u>loginFrame : LoginFrame</u>"                  as o_login
+object "<u>issueReportPanel : IssueReportPanel</u>"      as o_report
+object "<u>adminDashboard : AdminDashboard</u>"          as o_admin
+
+object "<u>authService : AuthService</u>"                as o_auth
+object "<u>validationService : ValidationService</u>"    as o_val
+object "<u>issueService : IssueService</u>"              as o_isvc
+
+object "<u>passwordUtils : PasswordUtils</u>"            as o_pwd
+object "<u>userDAO : UserDAO</u>"                        as o_udao
+object "<u>issueDAO : IssueDAO</u>"                      as o_idao
+object "<u>civiceye_db : MySQL 8</u>"                    as o_mysql
+
+' --- authentication : messages 1 - 9 ----------------------------------
+o_login --> o_auth  : 1: login(email, password)\n9: User
+o_auth  --> o_udao  : 2: findByEmail(email)\n5: UserRecord
+o_udao  --> o_mysql : 3: SELECT ... FROM users\n4: 0..1 row
+o_auth  --> o_pwd   : 6: verifyPassword(...)\n7: true
+o_auth  --> o_auth  : 8: build Citizen | Admin
+
+' --- reporting : messages 10 - 18 -------------------------------------
+o_login  --> o_report : 10: openReportForm()
+o_report --> o_isvc   : 11: submitIssue(...)\n18: Issue (Pending)
+o_isvc   --> o_val    : 12: validateIssueForm(...)\n13: null
+o_isvc   --> o_idao   : 14: createIssue(issue)\n17: true
+o_idao   --> o_mysql  : 15: INSERT INTO issues\n16: 1 row
+
+' --- status update : messages 19 - 26 ---------------------------------
+o_admin --> o_isvc   : 19: updateStatus(...)\n26: Status updated
+o_isvc  --> o_val    : 20: validateStatusTransition(...)\n21: true
+o_isvc  --> o_idao   : 22: updateIssueStatus(...)\n25: true
+o_idao  --> o_mysql  : 23: UPDATE issues\n24: 1 row
+
+note bottom of o_val
+  ValidationService is shared by both
+  collaborations: it is the only place
+  where the form rules and the status
+  transition rules live.
+end note
+
+@enduml

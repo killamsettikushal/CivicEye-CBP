@@ -1,0 +1,44 @@
+%% ==========================================================================
+%% CivicEye - UML Collaboration Diagram
+%% Scenario: a citizen submits a civic issue and the list is refreshed.
+%% Links are the associations between the participating objects; the numbers
+%% are the messages travelling along each link, in order.
+%% ==========================================================================
+flowchart LR
+    subgraph COLLAB["«collaboration» SubmitCivicIssue - objects and links"]
+        O_CIT(("citizen<br/>Citizen"))
+        O_FORM["reportPanel<br/>IssueReportPanel"]
+        O_SVC["issueService<br/>IssueService"]
+        O_VAL["validation<br/>ValidationService"]
+        O_ISS["issue<br/>Issue"]
+        O_IDAO["issueDAO<br/>IssueDAO"]
+        O_CONN["dbConnection<br/>DBConnection"]
+        O_STORE[("civiceye_db")]
+        O_TBL["tablePanel<br/>IssueTablePanel"]
+        O_MODEL["model<br/>DefaultTableModel"]
+        O_DASH["citizenDash<br/>CitizenDashboard"]
+    end
+
+    O_CIT -->|"1 submitIssue(userId, category, location, description)"| O_SVC
+    O_SVC -->|"2 validateIssueForm(category, location, description)"| O_VAL
+    O_VAL -->|"3 null = valid"| O_SVC
+    O_SVC -->|"4 new Issue(category, reporterId, location, description, Pending)"| O_ISS
+    O_SVC -->|"5 createIssue(issue)"| O_IDAO
+    O_IDAO -->|"6 getConnection()"| O_CONN
+    O_CONN -->|"7 Connection"| O_IDAO
+    O_IDAO -->|"8 INSERT INTO issues"| O_STORE
+    O_STORE -->|"9 generated issue_id"| O_IDAO
+    O_IDAO -->|"10 issue.setIssueId(id)"| O_ISS
+    O_ISS -->|"11 submitted Issue"| O_SVC
+    O_SVC -->|"12 submitted Issue"| O_FORM
+    O_FORM -->|"13 onSuccess.accept(issue)"| O_DASH
+    O_DASH -->|"14 loadIssues(list)"| O_TBL
+    O_TBL -->|"15 addRow(...)"| O_MODEL
+    O_MODEL -->|"16 row for issue 12"| O_TBL
+
+    classDef actor fill:#1b2a52,stroke:#5a8bff,color:#dce4ff
+    classDef obj fill:#101c3d,stroke:#2f4a8f,color:#dce4ff
+    classDef store fill:#2a2140,stroke:#a06bff,color:#e8dcff
+    class O_CIT actor
+    class O_FORM,O_SVC,O_VAL,O_ISS,O_IDAO,O_CONN,O_TBL,O_MODEL,O_DASH obj
+    class O_STORE store

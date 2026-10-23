@@ -1,0 +1,231 @@
+%% ==========================================================================
+%% CivicEye - UML Class Diagram
+%% Layers: model | service | dao | database | util | ui
+%% Source: src/civiceye/**
+%% ==========================================================================
+classDiagram
+    direction LR
+
+    %% ── Model ────────────────────────────────────────────────────────────
+    class User {
+        <<abstract>>
+        -int userId
+        -String name
+        -String email
+        +getUserId() int
+        +getName() String
+        +getEmail() String
+        +getRole() String
+    }
+
+    class Citizen {
+        -int userId
+        -String name
+        -String email
+        +getRole() String
+    }
+
+    class Admin {
+        -int userId
+        -String name
+        -String email
+        +getRole() String
+        +displayAdminMessage() void
+    }
+
+    class Issue {
+        -int issueId
+        -int reporterId
+        -String category
+        -String location
+        -String description
+        -String status
+        -LocalDateTime createdAt
+        +getIssueId() int
+        +getReporterId() int
+        +getCategory() String
+        +getLocation() String
+        +getDescription() String
+        +getStatus() String
+        +getCreatedAt() LocalDateTime
+        +getFormattedCreatedAt() String
+        +setIssueId(issueId: int) void
+        +setStatus(status: String) void
+    }
+
+    %% ── Service ──────────────────────────────────────────────────────────
+    class AuthService {
+        -UserDAO userDAO
+        -ValidationService validation
+        +login(email: String, password: String) User
+        +registerCitizen(name: String, email: String, password: String, confirmPassword: String) String
+        -buildUser(record: UserRecord) User
+    }
+
+    class IssueService {
+        -IssueDAO issueDAO
+        -ValidationService validation
+        +submitIssue(reporterId: int, category: String, location: String, description: String) Issue
+        +getIssuesByReporter(reporterId: int) List
+        +getAllIssues() List
+        +updateStatus(issueId: int, newStatus: String, requestingUser: User) String
+    }
+
+    class ValidationService {
+        +validateEmail(email: String) boolean
+        +validateLoginForm(email: String, password: String) String
+        +validateRegistrationForm(name: String, email: String, password: String, confirmPassword: String) String
+        +validateIssueForm(category: String, location: String, description: String) String
+        +validateStatus(status: String) boolean
+        +validateStatusTransition(currentStatus: String, newStatus: String) boolean
+    }
+
+    %% ── Data access ──────────────────────────────────────────────────────
+    class UserDAO {
+        +findByEmail(email: String) UserRecord
+        +createUser(name: String, email: String, passwordHash: String, salt: String, role: String) int
+        +emailExists(email: String) boolean
+    }
+
+    class IssueDAO {
+        +createIssue(issue: Issue) boolean
+        +getIssuesByReporter(reporterId: int) List
+        +getAllIssues() List
+        +getIssueById(issueId: int) Issue
+        +updateIssueStatus(issueId: int, newStatus: String) boolean
+        -mapRow(rs: ResultSet) Issue
+    }
+
+    class UserRecord {
+        -int userId
+        -String name
+        -String email
+        -String passwordHash
+        -String salt
+        -String role
+    }
+
+    class DBConnection {
+        <<utility>>
+        +getConnection() Connection
+        +testConnection() boolean
+        +getDbUrl() String
+    }
+
+    %% ── Support ──────────────────────────────────────────────────────────
+    class PasswordUtils {
+        <<utility>>
+        +generateSalt() String
+        +hashPassword(password: String, salt: String) String
+        +verifyPassword(plaintext: String, storedHash: String, salt: String) boolean
+    }
+
+    class AppConstants {
+        <<utility>>
+        +APP_NAME String
+        +APP_VERSION String
+        +ROLE_CITIZEN String
+        +ROLE_ADMIN String
+        +STATUS_PENDING String
+        +STATUS_IN_PROGRESS String
+        +STATUS_RESOLVED String
+        +ISSUE_CATEGORIES String[]
+    }
+
+    %% ── Presentation ─────────────────────────────────────────────────────
+    class Main {
+        +main(args: String[]) void
+    }
+
+    class LoginFrame {
+        -JTextField emailField
+        -JPasswordField passwordField
+        -JLabel statusLabel
+        -JButton loginButton
+        -attemptLogin() void
+        -openDashboard(user: User) void
+        +showStatus(msg: String, isError: boolean) void
+        +applyLookAndFeel() void
+    }
+
+    class RegistrationDialog {
+        -JTextField nameField
+        -JTextField emailField
+        -JPasswordField passwordField
+        -JPasswordField confirmField
+        -attemptRegister() void
+    }
+
+    class CitizenDashboard {
+        -Citizen citizen
+        -IssueService issueService
+        -IssueTablePanel tablePanel
+        +refreshTable() void
+        -logout() void
+    }
+
+    class AdminDashboard {
+        -Admin admin
+        -IssueService issueService
+        -IssueTablePanel tablePanel
+        -JComboBox statusCombo
+        -JComboBox filterCombo
+        +refreshTable() void
+        -applyFilter() void
+        -onRowSelected() void
+        -attemptStatusUpdate() void
+    }
+
+    class IssueReportPanel {
+        -Citizen citizen
+        -IssueService issueService
+        -Consumer onSuccess
+        -attemptSubmit() void
+        -clearForm() void
+        -updateCounter() void
+    }
+
+    class IssueTablePanel {
+        -DefaultTableModel model
+        -JTable table
+        -List issues
+        +loadIssues(newIssues: List) void
+        +getSelectedIssue() Issue
+        +clearSelection() void
+        +getTable() JTable
+        +getIssueCount() int
+    }
+
+    %% ── Relationships ────────────────────────────────────────────────────
+    User <|-- Citizen
+    User <|-- Admin
+
+    Issue "0..*" --> "1" Citizen : reported by
+    IssueService "1" --> "0..*" Issue : manages
+    AuthService "1" --> "0..*" User : authenticates
+
+    AuthService *-- UserDAO : owns
+    AuthService *-- ValidationService : owns
+    IssueService *-- IssueDAO : owns
+    IssueService *-- ValidationService : owns
+    UserDAO *-- UserRecord : produces
+    IssueDAO ..> Issue : maps to
+    UserDAO ..> DBConnection : uses
+    IssueDAO ..> DBConnection : uses
+    AuthService ..> PasswordUtils : hashes with
+    AuthService ..> AppConstants : reads roles
+    IssueService ..> AppConstants : reads statuses
+
+    LoginFrame *-- AuthService : owns
+    LoginFrame ..> RegistrationDialog : opens
+    LoginFrame ..> CitizenDashboard : opens
+    LoginFrame ..> AdminDashboard : opens
+    RegistrationDialog *-- AuthService : owns
+    CitizenDashboard *-- IssueService : owns
+    CitizenDashboard *-- IssueReportPanel : contains
+    CitizenDashboard *-- IssueTablePanel : contains
+    AdminDashboard *-- IssueService : owns
+    AdminDashboard *-- IssueTablePanel : contains
+    IssueReportPanel *-- IssueService : owns
+    IssueReportPanel ..> Citizen : reports for
+    Main ..> LoginFrame : starts

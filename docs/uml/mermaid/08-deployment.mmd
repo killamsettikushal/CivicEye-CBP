@@ -1,0 +1,43 @@
+%% ==========================================================================
+%% CivicEye - UML Deployment Diagram
+%% The application is a desktop Swing client; all UI runs on the user's
+%% machine.  The only remote node is the data store.
+%% Swing-only variant: delete the «device» Database Server node and the
+%% two edges that touch it - the rest of the diagram is unchanged.
+%% ==========================================================================
+flowchart TB
+    subgraph WS["«device» Citizen / Admin Workstation (Windows, Linux or macOS)"]
+        subgraph JVM["«artifact» Java Runtime Environment - JRE 17+"]
+            JRE["«artifact» JRE<br/>java.desktop module"]
+        end
+        subgraph APP["«artifact» CivicEye Application (compiled classes / JAR)"]
+            A_UI["«artifact» UI components<br/>LoginFrame, CitizenDashboard,<br/>AdminDashboard, IssueReportPanel,<br/>IssueTablePanel, RegistrationDialog"]
+            A_SVC["«artifact» Service components<br/>AuthService, IssueService,<br/>ValidationService"]
+            A_DAO["«artifact» Data access components<br/>UserDAO, IssueDAO, DBConnection"]
+            A_UTIL["«artifact» Support components<br/>PasswordUtils, AppConstants"]
+        end
+        CFG["«artifact» config.properties<br/>db.url, db.user, db.password"]
+        ENTRY["«artifact» Entry point<br/>civiceye.main.Main"]
+    end
+
+    subgraph SRV["«device» Database Server"]
+        DBMS["«artifact» Database engine<br/>civiceye_db"]
+        TBL_U["«artifact» Table: users<br/>user_id, name, email,<br/>password_hash, salt, role"]
+        TBL_I["«artifact» Table: issues<br/>issue_id, reporter_id, category,<br/>location, description, status, created_at"]
+    end
+
+    USR(("User")):::actor
+
+    USR -->|"launches"| ENTRY
+    ENTRY -->|"creates the login window on the EDT"| A_UI
+    A_UI -->|"uses"| A_SVC
+    A_SVC -->|"uses"| A_DAO
+    A_SVC -->|"uses"| A_UTIL
+    A_DAO -->|"reads credentials from"| CFG
+    A_UI -->|"runs on"| JRE
+    A_DAO -->|"opens a TCP connection on port 3306"| DBMS
+    DBMS --> TBL_U
+    DBMS --> TBL_I
+
+    classDef actor fill:#1b2a52,stroke:#5a8bff,color:#dce4ff
+    class USR actor

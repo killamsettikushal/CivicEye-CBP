@@ -1,0 +1,125 @@
+@startuml civiceye_sequence
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 4 of 9 : SEQUENCE DIAGRAM
+'  Notation: StarUML 5 — no actor symbols; every participant is an
+'  underlined object rectangle.  Solid arrows are calls, dashed open
+'  arrows are returns.  One straight scenario, no combined fragments.
+' ===================================================================
+title CivicEye — Sequence Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+
+skinparam sequence {
+  ActorBorderColor #000000
+  ActorBackgroundColor #FFFFFF
+  LifeLineBorderColor #000000
+  LifeLineBackgroundColor #FFFFFF
+  ParticipantBorderColor #000000
+  ParticipantBackgroundColor #FFFFFF
+  ParticipantFontColor #000000
+  ParticipantFontSize 11
+  ParticipantPadding 18
+  DividerBorderColor #000000
+  DividerBackgroundColor #FFFFFF
+  DividerFontColor #000000
+  GroupBorderColor #000000
+  GroupBackgroundColor #FFFFFF
+  NoteBorderColor #000000
+  NoteBackgroundColor #FFFFFF
+  NoteFontColor #000000
+  ReferenceBorderColor #000000
+  ReferenceBackgroundColor #FFFFFF
+}
+
+participant "<u>loginFrame : LoginFrame</u>"                  as LF
+participant "<u>authService : AuthService</u>"                as AS
+participant "<u>passwordUtils : PasswordUtils</u>"            as PU
+participant "<u>userDAO : UserDAO</u>"                        as UD
+participant "<u>civiceye_db : MySQL 8</u>"                    as DB
+participant "<u>citizenDashboard : CitizenDashboard</u>"      as CD
+participant "<u>issueReportPanel : IssueReportPanel</u>"      as IRP
+participant "<u>validationService : ValidationService</u>"    as VS
+participant "<u>issueService : IssueService</u>"              as IS
+participant "<u>issueDAO : IssueDAO</u>"                      as ID
+
+' ===================================================================
+'  1 - 9 : the citizen authenticates
+' ===================================================================
+LF  ->  AS  : 1: login(email, password)
+activate AS
+
+AS  ->  UD  : 2: findByEmail(email)
+activate UD
+UD  ->  DB  : 3: SELECT user_id, password_hash,\nsalt, role FROM users\nWHERE email = ?
+DB  -->  UD  : 4: 0..1 row
+UD  -->  AS  : 5: UserRecord
+deactivate UD
+
+AS  ->  PU  : 6: verifyPassword(plaintext, storedHash, salt)
+activate PU
+PU  -->  AS  : 7: true
+deactivate PU
+
+AS  ->  AS  : 8: build Citizen or Admin from role
+AS  -->  LF  : 9: User
+deactivate AS
+
+' ===================================================================
+'  10 - 16 : the role-specific dashboard is opened
+' ===================================================================
+LF  ->  CD  : 10: setVisible(true)
+activate CD
+CD  ->  IS  : 11: getIssuesByReporter(userId)
+activate IS
+IS  ->  ID  : 12: getIssuesByReporter(reporterId)
+activate ID
+ID  ->  DB  : 13: SELECT * FROM issues\nWHERE reporter_id = ?\nORDER BY created_at DESC
+DB  -->  ID  : 14: ResultSet
+ID  -->  IS  : 15: List<Issue>
+deactivate ID
+IS  -->  CD  : 16: List<Issue>
+deactivate IS
+
+' ===================================================================
+'  17 - 25 : the citizen reports a new issue
+' ===================================================================
+CD  ->  IRP  : 17: open the report form
+activate IRP
+IRP  ->  IS  : 18: submitIssue(reporterId, category, location, description)
+activate IS
+
+IS  ->  VS  : 19: validateIssueForm(category, location, description)
+activate VS
+VS  -->  IS  : 20: null (report is valid)
+deactivate VS
+
+IS  ->  ID  : 21: createIssue(issue)
+activate ID
+ID  ->  DB  : 22: INSERT INTO issues (...)\nVALUES (?, ?, ?, ?, 'Pending')
+DB  -->  ID  : 23: rows affected = 1
+ID  -->  IS  : 24: true
+deactivate ID
+
+IS  -->  IRP  : 25: the persisted Issue (status = "Pending")
+deactivate IS
+
+' ===================================================================
+'  26 - 27 : the table is refreshed with the new issue
+' ===================================================================
+IRP ->  CD  : 26: refreshTable()
+deactivate IRP
+CD  ->  CD  : 27: rebuild the table model from List<Issue>
+deactivate CD
+
+@enduml

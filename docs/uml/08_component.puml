@@ -1,0 +1,118 @@
+@startuml civiceye_component
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 8 of 9 : COMPONENT DIAGRAM
+'  Notation: StarUML 5 — component rectangles with the component
+'  icon, package folders, dashed dependency arrows.
+' ===================================================================
+title CivicEye — Component Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 11
+  FontStyle bold
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontStyle bold
+  FontSize 12
+}
+skinparam database {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+}
+skinparam artifact {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  NoteFontColor #000000
+  NoteFontSize 10
+}
+
+package "civiceye.jar" {
+
+  component "UI\n«subsystem»" as UI {
+    component "LoginFrame\nRegistrationDialog"        as C_LOGIN
+    component "CitizenDashboard\nIssueReportPanel"    as C_CIT
+    component "AdminDashboard\nIssueTablePanel"       as C_ADM
+  }
+
+  component "Service\n«subsystem»" as SVC {
+    component "AuthService"        as C_AUTH
+    component "IssueService"       as C_ISSUE
+    component "ValidationService"  as C_VAL
+  }
+
+  component "DAO\n«subsystem»" as DAO {
+    component "UserDAO"    as C_UDAO
+    component "IssueDAO"   as C_IDAO
+    component "UserRecord" as C_UREC
+  }
+
+  component "DBConnection"      as C_DB
+  component "PasswordUtils"     as C_PWD
+  component "AppConstants"      as C_CONST
+}
+
+artifact "config.properties"             as A_CFG
+artifact "mysql-connector-j.jar"         as A_JDBC
+database "MySQL 8 Server\n«DBMS»"        as N_MYSQL
+
+' --- UI -> Service ----------------------------------------------------
+C_LOGIN ..> C_AUTH
+C_CIT   ..> C_ISSUE
+C_ADM   ..> C_ISSUE
+
+' --- Service -> Service / DAO -----------------------------------------
+C_AUTH  ..> C_VAL
+C_ISSUE ..> C_VAL
+C_AUTH  ..> C_UDAO
+C_ISSUE ..> C_IDAO
+C_AUTH  ..> C_PWD
+
+' --- DAO -> DBConnection ----------------------------------------------
+C_UDAO ..> C_DB
+C_IDAO ..> C_DB
+C_UDAO ..> C_UREC
+
+' --- internal / external dependencies ---------------------------------
+C_DB    ..> A_CFG
+C_PWD   ..> C_CONST
+C_DB    ..> A_JDBC
+A_JDBC  ..> N_MYSQL
+
+note right of A_CFG
+  db.url / db.user / db.password
+  are resolved from the classpath,
+  then the working directory,
+  then the built-in defaults.
+end note
+
+note bottom of N_MYSQL
+  Tables: users, issues.
+  issues.reporter_id is a FOREIGN KEY
+  to users.user_id with ON DELETE CASCADE.
+end note
+
+@enduml

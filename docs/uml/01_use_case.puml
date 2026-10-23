@@ -1,0 +1,84 @@
+@startuml civiceye_use_case
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 1 of 9 : USE CASE DIAGRAM
+'  Notation: StarUML 5 — stick-figure actors, ellipses, straight
+'  association lines, dashed «include» arrows.
+' ===================================================================
+title CivicEye — Use Case Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+
+skinparam actor {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 12
+}
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 12
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontStyle bold
+  FontSize 13
+}
+
+left to right direction
+skinparam nodesep 40
+skinparam ranksep 85
+
+actor "Citizen" as C
+actor "Administrator" as A
+
+rectangle "CivicEye\nCivic Issue Reporting & Management System" {
+
+  usecase "Register Account"             as UC_REG
+  usecase "Report New Issue"             as UC_REPORT
+  usecase "View My Reported Issues"      as UC_MY
+  usecase "Login"                        as UC_LOGIN
+  usecase "Logout"                       as UC_LOGOUT
+  usecase "View All Issues"              as UC_ALL
+  usecase "Filter Issues by Status"      as UC_FILTER
+  usecase "Update Issue Status"          as UC_UPDATE
+
+  usecase "Validate Registration Form"   as UC_VREG
+  usecase "Validate Issue Form"          as UC_VISSUE
+  usecase "Verify Credentials"           as UC_VERIFY
+  usecase "Validate Status Transition"   as UC_VTRANS
+}
+
+' --- actor / use case associations (straight lines) -------------------
+C -- UC_REG
+C -- UC_REPORT
+C -- UC_MY
+C -- UC_LOGIN
+C -- UC_LOGOUT
+
+A -- UC_LOGIN
+A -- UC_LOGOUT
+A -- UC_ALL
+A -- UC_FILTER
+A -- UC_UPDATE
+
+' --- include : behaviour that is always executed ----------------------
+UC_REG    ..> UC_VREG   : <<include>>
+UC_REPORT ..> UC_VISSUE : <<include>>
+UC_LOGIN  ..> UC_VERIFY : <<include>>
+UC_UPDATE ..> UC_VTRANS : <<include>>
+
+@enduml

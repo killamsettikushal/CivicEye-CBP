@@ -1,0 +1,48 @@
+%% ==========================================================================
+%% CivicEye - UML Object Diagram
+%% Snapshot: a Citizen logged in, one issue submitted, the list refreshed.
+%% Every box is an INSTANCE (object) with its current attribute values.
+%% Solid link + "owner" label = UML composition (filled diamond).
+%% Dashed arrow = UML dependency.
+%% ==========================================================================
+flowchart TB
+    subgraph SNAP["«snapshot» Runtime state after a citizen submits an issue"]
+        O_MAIN["«object»<br/>main : Main<br/>&nbsp;&nbsp;args = null"]
+        O_LF["«object»<br/>loginFrame : LoginFrame<br/>&nbsp;&nbsp;emailField = 'anita@civic.gov'<br/>&nbsp;&nbsp;loginButton.enabled = false"]
+        O_AUTH["«object»<br/>authService : AuthService"]
+        O_VLD["«object»<br/>validation : ValidationService"]
+        O_UDAO["«object»<br/>userDAO : UserDAO"]
+        O_UDBC["«object»<br/>dbConnection : DBConnection"]
+        O_REC["«object»<br/>record : UserRecord<br/>&nbsp;&nbsp;userId = 7<br/>&nbsp;&nbsp;name = 'Anita Rao'<br/>&nbsp;&nbsp;email = 'anita@civic.gov'<br/>&nbsp;&nbsp;passwordHash = '9f2c...a41e'<br/>&nbsp;&nbsp;salt = '3b81c0d4e5f6071a9b2c3d4e5f60718'<br/>&nbsp;&nbsp;role = 'Citizen'"]
+        O_CIT["«object»<br/>citizen : Citizen<br/>&nbsp;&nbsp;userId = 7<br/>&nbsp;&nbsp;name = 'Anita Rao'<br/>&nbsp;&nbsp;email = 'anita@civic.gov'<br/>&nbsp;&nbsp;role = 'Citizen'"]
+        O_CDASH["«object»<br/>citizenDash : CitizenDashboard<br/>&nbsp;&nbsp;citizen = citizen"]
+        O_ISVC["«object»<br/>issueService : IssueService"]
+        O_IDAO["«object»<br/>issueDAO : IssueDAO"]
+        O_FORM["«object»<br/>reportPanel : IssueReportPanel<br/>&nbsp;&nbsp;citizen = citizen<br/>&nbsp;&nbsp;onSuccess = lambda"]
+        O_ISSUE["«object»<br/>issue : Issue<br/>&nbsp;&nbsp;issueId = 12<br/>&nbsp;&nbsp;reporterId = 7<br/>&nbsp;&nbsp;category = 'Roads'<br/>&nbsp;&nbsp;location = 'MG Road, Rajaji Nagar'<br/>&nbsp;&nbsp;description = 'Deep pothole near the bus stop'<br/>&nbsp;&nbsp;status = 'Pending'<br/>&nbsp;&nbsp;createdAt = 2026-10-20T10:30:00"]
+        O_TPANEL["«object»<br/>tablePanel : IssueTablePanel<br/>&nbsp;&nbsp;issues = [issue]"]
+        O_MODEL["«object»<br/>model : DefaultTableModel<br/>&nbsp;&nbsp;rowCount = 1"]
+        O_SORTER["«object»<br/>rowSorter : TableRowSorter"]
+        O_STORE[("«store»<br/>civiceye_db<br/>users, issues")]
+    end
+
+    O_MAIN -.->|"creates"| O_LF
+    O_LF ---|"owner"| O_AUTH
+    O_AUTH ---|"owner"| O_VLD
+    O_AUTH ---|"owner"| O_UDAO
+    O_UDAO -.-> O_UDBC
+    O_UDAO -.->|"returns"| O_REC
+    O_AUTH -.->|"builds"| O_CIT
+    O_LF -.->|"opens"| O_CDASH
+    O_CDASH ---|"owner"| O_ISVC
+    O_CDASH ---|"owner"| O_FORM
+    O_CDASH ---|"owner"| O_TPANEL
+    O_ISVC ---|"owner"| O_IDAO
+    O_FORM ---|"owner"| O_ISVC
+    O_ISVC -.->|"creates"| O_ISSUE
+    O_IDAO -.-> O_STORE
+    O_UDBC -.-> O_STORE
+    O_ISSUE -.->|"reporterId = 7"| O_CIT
+    O_TPANEL ---|"owner"| O_MODEL
+    O_MODEL ---|"owner"| O_SORTER
+    O_MODEL -.->|"row 1"| O_ISSUE

@@ -1,0 +1,140 @@
+@startuml civiceye_object
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 3 of 9 : OBJECT DIAGRAM
+'  Notation: StarUML 5 — underlined "name : Class" rectangles.
+'  A runtime snapshot: one logged-in Citizen, one Administrator and
+'  the issue instances that exist at that moment.  The rows are the
+'  ones created by sql/insert_sample_data.sql.
+' ===================================================================
+title CivicEye — Object Diagram (runtime snapshot)
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+skinparam classAttributeIconSize 0
+skinparam nodesep 45
+skinparam ranksep 55
+
+skinparam object {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 11
+  AttributeFontColor #000000
+  AttributeFontSize 10
+}
+
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  NoteFontColor #000000
+  NoteFontSize 10
+}
+
+' --- session objects (in memory) --------------------------------------
+object "<u>citizenSession : Citizen</u>" as o_citizen {
+  userId = 2
+  name = "Ravi Kumar"
+  email = "citizen@civiceye.com"
+  role = "Citizen"
+}
+
+object "<u>adminSession : Admin</u>" as o_admin {
+  userId = 1
+  name = "System Administrator"
+  email = "admin@civiceye.com"
+  role = "Admin"
+}
+
+object "<u>issueTableModel : DefaultTableModel</u>" as o_table {
+  rowCount = 3
+  selectedIssueId = 2
+}
+
+object "<u>issueService : IssueService</u>" as o_isvc {
+  pendingCount = 1
+  inProgressCount = 1
+  resolvedCount = 1
+}
+
+' --- persistent objects (rows) ----------------------------------------
+object "<u>admin : users</u>" as t_admin {
+  user_id = 1
+  name = "System Administrator"
+  email = "admin@civiceye.com"
+  password_hash = "01b79d24...a278864"
+  salt = "a1b2c3d4e5f60001"
+  role = "Admin"
+}
+
+object "<u>ravi : users</u>" as t_citizen {
+  user_id = 2
+  name = "Ravi Kumar"
+  email = "citizen@civiceye.com"
+  password_hash = "1960dc3f...53af057c"
+  salt = "f0e1d2c3b4a50002"
+  role = "Citizen"
+}
+
+object "<u>issue1 : issues</u>" as t_i1 {
+  issue_id = 1
+  reporter_id = 2
+  category = "Roads"
+  location = "MG Road, Bengaluru"
+  description = "Large pothole near the traffic signal"
+  status = "Pending"
+  created_at = "2026-10-10 09:15:00"
+}
+
+object "<u>issue2 : issues</u>" as t_i2 {
+  issue_id = 2
+  reporter_id = 2
+  category = "Sanitation"
+  location = "Koramangala 4th Block"
+  description = "Garbage not collected for five days"
+  status = "In Progress"
+  created_at = "2026-10-12 14:30:00"
+}
+
+object "<u>issue3 : issues</u>" as t_i3 {
+  issue_id = 3
+  reporter_id = 2
+  category = "Street Lighting"
+  location = "Indiranagar 100 Feet Road"
+  description = "Three streetlights non-functional after 8 PM"
+  status = "Resolved"
+  created_at = "2026-10-14 18:00:00"
+}
+
+' --- links -------------------------------------------------------------
+o_citizen --> t_citizen : session for
+o_admin   --> t_admin   : session for
+
+o_citizen --> t_i1 : reported
+o_citizen --> t_i2 : reported
+o_citizen --> t_i3 : reported
+
+o_table --> t_i1 : displays
+o_table --> t_i2 : displays
+o_table --> t_i3 : displays
+
+o_admin --> o_table : selects row 2
+o_admin --> o_isvc : 1: updateStatus(2, "Resolved")
+o_isvc  --> t_i2  : sets status = "Resolved"
+
+note bottom of t_i2
+  reporter_id is a FOREIGN KEY to
+  users(user_id) with ON DELETE CASCADE,
+  so deleting the citizen deletes the
+  three issue rows as well.
+end note
+
+@enduml

@@ -1,0 +1,121 @@
+@startuml civiceye_activity
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 7 of 9 : ACTIVITY DIAGRAM
+'  Notation: StarUML 5 — swim-lane partitions, initial / final pseudo
+'  states, decision diamonds, FORK and JOIN bars.
+'  After a successful login the Citizen Portal and the Admin Portal
+'  work concurrently on the same database: the token is forked into
+'  the two lanes and joined again before the application is closed.
+' ===================================================================
+title CivicEye — Activity Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+
+skinparam activity {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 11
+  DiamondBackgroundColor #FFFFFF
+  DiamondBorderColor #000000
+  DiamondFontColor #000000
+}
+skinparam swimlane {
+  BorderColor #000000
+  TitleBackgroundColor #FFFFFF
+  TitleFontColor #000000
+  TitleFontSize 12
+  TitleFontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  NoteFontColor #000000
+  NoteFontSize 10
+}
+
+|Citizen|
+start
+:Open CivicEye;
+:Enter email and password;
+
+|Swing UI|
+:validateLoginForm(email, password);
+
+if (Form well formed?) then (no)
+  :Show "Enter a valid email and password";
+  stop
+else (yes)
+
+  |Service|
+  :login(email, password);
+  :verifyPassword(plaintext, hash, salt);
+
+  if (Credentials valid?) then (no)
+    |Swing UI|
+    :Show "Invalid email or password";
+    stop
+  else (yes)
+
+    |Swing UI|
+    :Open CitizenDashboard\nor AdminDashboard;
+
+    ' ===============================================================
+    '  FORK — the two portals now work concurrently
+    ' ===============================================================
+    fork
+
+      |Citizen|
+      :Choose category, location\nand description;
+      :Click Submit;
+
+      |Swing UI|
+      :attemptSubmit();
+
+      |Service|
+      :validateIssueForm(category, location, description);
+      :createIssue(issue);
+
+      |Database|
+      :INSERT INTO issues\n(status = "Pending");
+
+    fork again
+
+      |Administrator|
+      :Select the reported issue;
+      :Choose the new status;
+      :Click Update Status;
+
+      |Service|
+      :validateStatusTransition(current, new);
+      :updateIssueStatus(issueId, newStatus);
+
+      |Database|
+      :UPDATE issues\nSET status = ?;
+
+    end fork
+    ' ===============================================================
+    '  JOIN — both portals are idle again
+    ' ===============================================================
+
+    |Swing UI|
+    :Refresh both tables;
+    :Show the result of the update;
+
+    stop
+
+  endif
+
+endif
+
+@enduml

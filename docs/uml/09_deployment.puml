@@ -1,0 +1,105 @@
+@startuml civiceye_deployment
+' ===================================================================
+'  CivicEye — Civic Issue Reporting & Management System
+'  Diagram 9 of 9 : DEPLOYMENT DIAGRAM
+'  Notation: StarUML 5 — 3-D node boxes, artifacts nested inside the
+'  node they are deployed on, solid communication associations with
+'  the protocol as stereotype.
+' ===================================================================
+title CivicEye — Deployment Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam ArrowColor #000000
+skinparam ArrowFontColor #000000
+skinparam ArrowFontName Arial
+skinparam BorderColor #000000
+skinparam BorderThickness 1
+skinparam nodesep 55
+skinparam ranksep 60
+
+skinparam node {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 11
+  FontStyle bold
+}
+skinparam artifact {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+  FontSize 10
+}
+skinparam database {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+}
+skinparam note {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  NoteFontColor #000000
+  NoteFontSize 10
+}
+
+' ===================================================================
+'  CLIENT NODES
+' ===================================================================
+node "«device»\nCitizen PC\n«OS» Windows / Linux" as N_CIT {
+  artifact "civiceye.jar"                as A_APP_CIT
+  artifact "mysql-connector-j.jar"       as A_JDBC_CIT
+}
+
+node "«device»\nAdministrator PC\n«OS» Windows / Linux" as N_ADM {
+  artifact "civiceye.jar"                as A_APP_ADM
+  artifact "mysql-connector-j.jar"       as A_JDBC_ADM
+}
+
+' ===================================================================
+'  SERVER NODE
+' ===================================================================
+node "«server»\nDatabase Server" as N_DB {
+  node "«execution environment»\nMySQL 8.0" as N_MYSQL {
+    artifact "MySQL Server 8.0"          as A_MYSQL
+    database "civiceye_db"               as DB_CIVIC
+  }
+}
+
+' ===================================================================
+'  COMMUNICATION
+' ===================================================================
+N_CIT --> N_MYSQL : «JDBC»
+N_ADM --> N_MYSQL : «JDBC»
+
+note top of N_CIT
+  JRE 17+, civiceye.jar,
+  mysql-connector-j.jar and
+  config.properties are
+  installed on both PCs.
+end note
+
+note top of N_ADM
+  Admin Portal — review an
+  issue and move it through
+  Pending -> In Progress -> Resolved.
+end note
+
+note right of N_MYSQL
+  Only TCP port 3306 is
+  exposed. The credentials
+  come from config.properties.
+end note
+
+note bottom of DB_CIVIC
+  users(user_id PK, name, email UNIQUE,
+  password_hash, salt, role, created_at)
+  issues(issue_id PK, reporter_id FK -> users,
+  category, location, description, status,
+  created_at)
+end note
+
+@enduml
